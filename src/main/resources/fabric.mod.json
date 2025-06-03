@@ -1,0 +1,41 @@
+{
+    "schemaVersion": 1,
+    "id": "lanwhitelist",
+    "version": "${version}",
+    "name": "LANWhitelist",
+    "description": "A mod to enforce a whitelist on LAN servers",
+    "authors": ["technicfan"],
+    "license": "MIT",
+    "contact": {
+        "sources": "https://github.com/technicfan/LANWhitelist",
+        "issues": "https://github.com/technicfan/LANWhitelist/issues"
+    },
+    "icon": "assets/lanwhitelist/icon.png",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "technicfan.lanwhitelist.LANWhitelist"
+        ],
+        "client": [
+            "technicfan.lanwhitelist.LANWhitelistClient"
+        ],
+        "modmenu": [
+            "technicfan.lanwhitelist.LANWhitelistModMenuIntegration"
+        ]
+    },
+    "mixins": [
+        "lanwhitelist.mixins.json",
+        {
+            "config": "lanwhitelist.client.mixins.json",
+            "environment": "client"
+        }
+    ],
+    "depends": {
+        "fabricloader": ">=0.16.10",
+        "minecraft": "~1.21",
+        "java": ">=21",
+        "fabric": "*",
+        "modmenu": "*",
+        "cloth-config": "*"
+    }
+}
