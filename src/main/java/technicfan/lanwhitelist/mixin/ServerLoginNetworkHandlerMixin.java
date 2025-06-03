@@ -24,7 +24,7 @@ public abstract class ServerLoginNetworkHandlerMixin {
         cancellable = true
     )
     private void checkPlayer(LoginHelloC2SPacket packet, CallbackInfo ci) {
-        if (packet != null) {
+        if (LANWhitelist.enabled() && packet != null) {
             String id = LANWhitelist.getUseUuid() ? packet.profileId().toString() : packet.name();
             if (!LANWhitelist.checkWhitelist(id)) {
                 disconnect(Text.of("You are not whitelisted!"));

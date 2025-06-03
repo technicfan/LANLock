@@ -1,7 +1,5 @@
 package technicfan.lanwhitelist;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
@@ -10,14 +8,12 @@ import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,8 +29,16 @@ public class LANWhitelistConfigScreen {
         ConfigCategory general = builder.getOrCreateCategory(Text.of("LANWhitelist Settings"));
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
-        AtomicReference<List<String>> whitelist = new AtomicReference<>(LANWhitelist.getNames());
+        AtomicReference<Boolean> enabled = new AtomicReference<>(LANWhitelist.enabled());
         AtomicReference<Boolean> useUuid = new AtomicReference<>(LANWhitelist.getUseUuid());
+        AtomicReference<List<String>> whitelist = new AtomicReference<>(LANWhitelist.getNames());
+
+        general.addEntry(entryBuilder.startBooleanToggle(
+                Text.of("Enabled"), enabled.get())
+                .setTooltip(Text.of("Enable/Disable the whitelist"))
+                .setDefaultValue(true)
+                .setSaveConsumer(enabled::set)
+                .build());
 
         general.addEntry(entryBuilder.startBooleanToggle(
                 Text.of("Use UUID for whitelist check (recommended)"), useUuid.get())
@@ -50,7 +54,7 @@ public class LANWhitelistConfigScreen {
                 .setSaveConsumer(whitelist::set)
                 .build());
 
-        builder.setSavingRunnable(() -> save(whitelist.get(), useUuid.get()));
+        builder.setSavingRunnable(() -> save(enabled.get(), useUuid.get(), whitelist.get()));
 
         return builder.build();
     }
@@ -81,39 +85,28 @@ public class LANWhitelistConfigScreen {
         }
     }
 
-    private static void save(List<String> whitelist, Boolean useUuid) {
-        try {
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            ArrayList<String> removeIds = new ArrayList<>(Collections.emptyList());
-            Whitelist newList = new Whitelist();
+    private static void save(boolean enabled, boolean useUuid, List<String> whitelist) {
+        ArrayList<String> removeIds = new ArrayList<>(Collections.emptyList());
+        Whitelist newList = new Whitelist();
 
-            for (String s : whitelist) {
-                String id = getUuid(s);
-                if ((!useUuid || !id.isEmpty()) && !newList.contains(s)) {
-                    if (!id.isEmpty() &&
-                        (LANWhitelist.checkWhitelist(id) && !LANWhitelist.checkWhitelist(s))
-                    ) removeIds.add(id);
-                    newList.add(new Player(s, id));
-                }
+        for (String s : whitelist) {
+            String id = getUuid(s);
+            if ((!useUuid || !id.isEmpty()) && !newList.contains(s)) {
+                if (!id.isEmpty() &&
+                    (LANWhitelist.checkWhitelist(id) && !LANWhitelist.checkWhitelist(s))
+                ) removeIds.add(id);
+                newList.add(new Player(s, id));
             }
-            for (String id : removeIds) {
-                newList.removeIf(player ->
-                        player.get("name")
-                            .equals(LANWhitelist.getWhitelistCounterpart(id)) &&
-                        player.get("uuid")
-                            .equals(id)
-                );
-            }
-
-            Config config = new Config(useUuid, newList);
-
-            try (FileWriter writer = new FileWriter(LANWhitelist.CONFIG_FILE)) {
-                writer.write(gson.toJson(config));
-            }
-
-            LANWhitelist.setConfig(config.useUuid(), config.whitelist());
-        } catch (IOException e) {
-            LANWhitelist.LOGGER.error(Arrays.toString(e.getStackTrace()));
         }
+        for (String id : removeIds) {
+            newList.removeIf(player ->
+                    player.get("name")
+                        .equals(LANWhitelist.getWhitelistCounterpart(id)) &&
+                    player.get("uuid")
+                        .equals(id)
+            );
+        }
+
+        LANWhitelist.saveConfig(enabled, useUuid, newList);
     }
 }

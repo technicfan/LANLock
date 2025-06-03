@@ -3,12 +3,22 @@ package technicfan.lanwhitelist;
 import java.util.ArrayList;
 
 class Config {
+    private boolean enabled;
     private boolean useUuid;
     private Whitelist whitelist;
 
-    public Config(boolean useName, Whitelist whitelist) {
-        this.useUuid = useName;
-        this.whitelist = whitelist;
+    public Config() {
+        this.enabled = true;
+        this.useUuid = true;
+        this.whitelist = new Whitelist();
+    }
+
+    public boolean enabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean newValue) {
+        enabled = newValue;
     }
 
     public boolean useUuid() {
