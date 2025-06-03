@@ -7,7 +7,8 @@ I started to work on a new PR but soon noticed that I'm basically rewriting the 
 So I thought, it would be better if I just start a fully own mod that uses a different approach to enforce the whitelist.
 And here we are :)
 <br>
-Also a thank you again to [Ovilli](https://github.com/Ovilli) for creating their mod that is the start of this one.
+<br>
+Also a thanks to [Ovilli](https://github.com/Ovilli) for creating their mod that is the start of this one.
 
 ## Reason for this mod
 
