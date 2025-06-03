@@ -31,8 +31,8 @@ class Config {
 class Whitelist extends ArrayList<Player> {
     public boolean contains(String value) {
         String keyQuery = value.contains("-") ? "uuid" : "name";
-        for (Player user : this){
-            if (user.get(keyQuery).equals(value)) {
+        for (Player player : this){
+            if (player.get(keyQuery).equals(value)) {
                 return true;
             }
         }
@@ -48,9 +48,9 @@ class Whitelist extends ArrayList<Player> {
             keyQuery = "name";
             keyResult = "uuid";
         }
-        for (Player user : this){
-            if (user.get(keyQuery).equals(value)) {
-                return user.get(keyResult);
+        for (Player player : this){
+            if (player.get(keyQuery).equals(value)) {
+                return player.get(keyResult);
             }
         }
         return null;

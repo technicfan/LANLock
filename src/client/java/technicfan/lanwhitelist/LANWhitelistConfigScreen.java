@@ -38,7 +38,7 @@ public class LANWhitelistConfigScreen {
 
         general.addEntry(entryBuilder.startBooleanToggle(
                 Text.of("Use UUID for whitelist check"), useUuid.get())
-                .setTooltip(Text.of("Disable only for testing as it will use the username which is easier to spoof"))
+                .setTooltip(Text.of("Disable only for testing as it will use the username which less secure"))
                 .setDefaultValue(true)
                 .setSaveConsumer(useUuid::set)
                 .build());
@@ -47,7 +47,6 @@ public class LANWhitelistConfigScreen {
                 (Text.of("Whitelisted Players"), whitelist.get())
                 .setTooltip(Text.of("Edit whitelist for LAN worlds"))
                 .setExpanded(true)
-                //.setDefaultValue(new ArrayList<>())
                 .setSaveConsumer(whitelist::set)
                 .build());
 
@@ -98,11 +97,11 @@ public class LANWhitelistConfigScreen {
                 }
             }
             for (String id : removeIds) {
-                newList.removeIf(user ->
-                        user.get("name")
-                        .equals(LANWhitelist.getWhitelistCounterpart(id)) &&
-                        user.get("uuid")
-                        .equals(id)
+                newList.removeIf(player ->
+                        player.get("name")
+                            .equals(LANWhitelist.getWhitelistCounterpart(id)) &&
+                        player.get("uuid")
+                            .equals(id)
                 );
             }
 
