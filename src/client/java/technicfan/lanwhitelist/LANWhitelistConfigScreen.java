@@ -37,7 +37,7 @@ public class LANWhitelistConfigScreen {
         AtomicReference<Boolean> useUuid = new AtomicReference<>(LANWhitelist.getUseUuid());
 
         general.addEntry(entryBuilder.startBooleanToggle(
-                Text.of("Use UUID for whitelist check"), useUuid.get())
+                Text.of("Use UUID for whitelist check (recommended)"), useUuid.get())
                 .setTooltip(Text.of("Disable only for testing as it will use the username which less secure"))
                 .setDefaultValue(true)
                 .setSaveConsumer(useUuid::set)
