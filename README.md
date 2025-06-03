@@ -1,16 +1,12 @@
 # LANWhitelist
 
----
-
 A few days ago, I stumbled accross [LANGuard](https://github.com/Ovilli/LANGuard),
 a mod that achieves the same thing as this one and also contributed to it.
 As this was my first ever contact with Java and Minecraft Mod Development,
 I started to work on a new PR but soon noticed that I'm basically rewriting the entire mod.
 So I thought, it would be better if I just start a fully own mod that uses a different approach to enforce the whitelist.
 And here we are :)
-
----
-
+<br>
 Also a thank you again to [Ovilli](https://github.com/Ovilli) for creating their mod that is the start of this one.
 
 ## Reason for this mod
