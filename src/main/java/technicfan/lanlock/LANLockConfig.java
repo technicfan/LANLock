@@ -1,13 +1,14 @@
 package technicfan.lanlock;
 
 import java.util.ArrayList;
+import java.util.Map;
 
-class Config {
+public class LANLockConfig {
     private boolean enabled;
     private boolean useUuid;
-    private ArrayList<Player> whitelist;
+    private ArrayList<Map<String, String>> whitelist;
 
-    public Config() {
+    public LANLockConfig() {
         this.enabled = true;
         this.useUuid = true;
         this.whitelist = new ArrayList<>();
@@ -29,30 +30,12 @@ class Config {
         useUuid = newValue;
     }
 
-    public ArrayList<Player> whitelist() {
+    public ArrayList<Map<String, String>> whitelist() {
         return whitelist;
     }
 
-    public void setWhitelist(ArrayList<Player> newList) {
+    public void setWhitelist(ArrayList<Map<String, String>> newList) {
         whitelist = newList;
-    }
-}
-
-class Player {
-    private final String uuid;
-    private final String name;
-
-    public Player(String  uuid, String name) {
-        this.uuid = uuid;
-        this.name = name;
-    }
-
-    public String get(String field) {
-        return switch (field) {
-            case "uuid" -> uuid;
-            case "name" -> name;
-            default -> null;
-        };
     }
 }
 

@@ -17,16 +17,13 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class LANLock implements ModInitializer {
 	public static final String MOD_ID = "lanlock";
 	private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	private static File CONFIG_FILE;
-	private static Config CONFIG = new Config();
+	private static LANLockConfig CONFIG = new LANLockConfig();
 
 	@Override
 	public void onInitialize() {
@@ -43,7 +40,7 @@ public class LANLock implements ModInitializer {
 			keyQuery = "name";
 			keyResult = "uuid";
 		}
-		for (Player player : CONFIG.whitelist()){
+		for (Map<String, String> player : CONFIG.whitelist()){
 			if (player.get(keyQuery).equals(id)) {
 				return player.get(keyResult);
 			}
@@ -51,16 +48,16 @@ public class LANLock implements ModInitializer {
 		return null;
 	}
 
-	private Config loadConfig() {
+	private LANLockConfig loadConfig() {
 		try {
 			try (FileReader reader = new FileReader(CONFIG_FILE)) {
 				LOGGER.info("Loaded LANLock config");
-				return new Gson().fromJson(reader, Config.class);
+				return new Gson().fromJson(reader, LANLockConfig.class);
 			}
 		} catch (IOException e) {
 			LOGGER.error(Arrays.toString(e.getStackTrace()));
 		}
-		return new Config();
+		return new LANLockConfig();
 	}
 
 	private static String getUuid(String name) {
@@ -91,7 +88,7 @@ public class LANLock implements ModInitializer {
 
 	public static List<String> getNames() {
 		ArrayList<String> names = new ArrayList<>(Collections.emptyList());
-		for (Player user : CONFIG.whitelist()) {
+		for (Map<String, String> user : CONFIG.whitelist()) {
 			if (CONFIG.useUuid() || !user.get("uuid").isEmpty()) names.add(user.get("name"));
 		}
 		return names;
@@ -108,7 +105,7 @@ public class LANLock implements ModInitializer {
 
 	public static boolean checkWhitelist(String id) {
 		String keyQuery = id.contains("-") ? "uuid" : "name";
-		for (Player player : CONFIG.whitelist()){
+		for (Map<String, String> player : CONFIG.whitelist()){
 			if (player.get(keyQuery).equals(id)) {
 				return true;
 			}
@@ -118,15 +115,20 @@ public class LANLock implements ModInitializer {
 
 	public static void saveConfig(boolean enabled, boolean useUuid, List<String> whitelist) {
 		ArrayList<String> removeIds = new ArrayList<>(Collections.emptyList());
-		ArrayList<Player> newWhitelist = new ArrayList<>();
+		ArrayList<Map<String, String>> newWhitelist = new ArrayList<>();
 
 		for (String s : whitelist.stream().sorted().distinct().toList()) {
-			String id = getUuid(s);
-			if (!useUuid || !id.isEmpty()) {
-				if (!id.isEmpty() &&
-						(checkWhitelist(id) && !checkWhitelist(s))
-				) removeIds.add(id);
-				newWhitelist.add(new Player(id, s));
+			if (!s.isEmpty()) {
+				String id = getUuid(s);
+				if (!useUuid || !id.isEmpty()) {
+					if (!id.isEmpty() &&
+							(checkWhitelist(id) && !checkWhitelist(s))
+					) removeIds.add(id);
+					newWhitelist.add(Map.of(
+							"uuid", id,
+							"name", s
+					));
+				}
 			}
 		}
 		for (String id : removeIds) {

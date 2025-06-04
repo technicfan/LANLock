@@ -1,0 +1,10 @@
+{
+    "lanlock.config.title": "LANLock Config",
+    "lanlock.config.general": "LANLock Settings",
+    "lanlock.config.enabled": "Enabled",
+    "lanlock.config.enabled.description": "Enable/Disable the whitelist",
+    "lanlock.config.useUuid": "Use UUID for whitelist check (recommended)",
+    "lanlock.config.useUuid.description": "Disable only for testing as it will use the playername which less secure",
+    "lanlock.config.whitelist": "Whitelisted Players",
+    "lanlock.config.whitelist.description": "Edit whitelist for LAN worlds"
+}

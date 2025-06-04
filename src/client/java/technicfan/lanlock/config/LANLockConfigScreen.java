@@ -16,9 +16,9 @@ public class LANLockConfigScreen {
     public static Screen getScreen(Screen parent) {
         ConfigBuilder builder = create()
                 .setParentScreen(parent)
-                .setTitle(Text.of("LANLock Config"));
+                .setTitle(Text.translatable("lanlock.config.title"));
 
-        ConfigCategory general = builder.getOrCreateCategory(Text.of("LANLock Settings"));
+        ConfigCategory general = builder.getOrCreateCategory(Text.translatable("lanlock.config.general"));
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
         AtomicReference<Boolean> enabled = new AtomicReference<>(LANLock.enabled());
@@ -26,22 +26,22 @@ public class LANLockConfigScreen {
         AtomicReference<List<String>> whitelist = new AtomicReference<>(LANLock.getNames());
 
         general.addEntry(entryBuilder.startBooleanToggle(
-                Text.of("Enabled"), enabled.get())
-                .setTooltip(Text.of("Enable/Disable the whitelist"))
+                Text.translatable("lanlock.config.enabled"), enabled.get())
+                .setTooltip(Text.translatable("lanlock.config.enabled.description"))
                 .setDefaultValue(true)
                 .setSaveConsumer(enabled::set)
                 .build());
 
         general.addEntry(entryBuilder.startBooleanToggle(
-                Text.of("Use UUID for whitelist check (recommended)"), useUuid.get())
-                .setTooltip(Text.of("Disable only for testing as it will use the username which less secure"))
+                Text.translatable("lanlock.config.useUuid"), useUuid.get())
+                .setTooltip(Text.translatable("lanlock.config.useUuid.description"))
                 .setDefaultValue(true)
                 .setSaveConsumer(useUuid::set)
                 .build());
 
         general.addEntry(entryBuilder.startStrList
-                (Text.of("Whitelisted Players"), whitelist.get())
-                .setTooltip(Text.of("Edit whitelist for LAN worlds"))
+                (Text.translatable("lanlock.config.whitelist"), whitelist.get())
+                .setTooltip(Text.translatable("lanlock.config.whitelist.description"))
                 .setExpanded(true)
                 .setSaveConsumer(whitelist::set)
                 .build());

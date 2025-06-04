@@ -21,7 +21,7 @@ With this mod I tried to recreate the Minecraft Server whitelist system as close
 - a whitelist similar to the server counterpart
     - stores name and UUID
     - UUID is used to check if connecting player is on the whitelist
-- config screen made with Cloth Config in modmenu for easy configuration
+- config screen made with Cloth technicfan.lanlock.LANLockConfig in modmenu for easy configuration
     - automatically resolves UUID for added playernames
         - because I'm to lazy/stupid to do this asynchronously saving can take longer the more new players are added in one go
     - option to disable the whitelist entirely
