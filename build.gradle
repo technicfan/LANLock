@@ -24,7 +24,7 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"lanwhitelist" {
+		"lanlock" {
 			sourceSet sourceSets.main
 		}
 	}
