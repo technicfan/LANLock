@@ -1,11 +1,11 @@
-package technicfan.lanlock.client.config;
+package technicfan.lanlock.config;
 
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
-import technicfan.lanlock.client.LANLockClient;
+import technicfan.lanlock.LANLock;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,9 +21,9 @@ public class LANLockConfigScreen {
         ConfigCategory general = builder.getOrCreateCategory(Text.of("LANLock Settings"));
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
-        AtomicReference<Boolean> enabled = new AtomicReference<>(LANLockClient.enabled());
-        AtomicReference<Boolean> useUuid = new AtomicReference<>(LANLockClient.getUseUuid());
-        AtomicReference<List<String>> whitelist = new AtomicReference<>(LANLockClient.getNames());
+        AtomicReference<Boolean> enabled = new AtomicReference<>(LANLock.enabled());
+        AtomicReference<Boolean> useUuid = new AtomicReference<>(LANLock.getUseUuid());
+        AtomicReference<List<String>> whitelist = new AtomicReference<>(LANLock.getNames());
 
         general.addEntry(entryBuilder.startBooleanToggle(
                 Text.of("Enabled"), enabled.get())
@@ -46,7 +46,7 @@ public class LANLockConfigScreen {
                 .setSaveConsumer(whitelist::set)
                 .build());
 
-        builder.setSavingRunnable(() -> LANLockClient.saveConfig(enabled.get(), useUuid.get(), whitelist.get()));
+        builder.setSavingRunnable(() -> LANLock.saveConfig(enabled.get(), useUuid.get(), whitelist.get()));
 
         return builder.build();
     }

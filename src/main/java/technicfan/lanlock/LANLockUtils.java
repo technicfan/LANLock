@@ -1,4 +1,4 @@
-package technicfan.lanlock.client;
+package technicfan.lanlock;
 
 import java.util.ArrayList;
 

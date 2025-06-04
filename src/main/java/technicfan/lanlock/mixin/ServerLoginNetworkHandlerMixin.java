@@ -1,4 +1,4 @@
-package technicfan.lanlock.client.mixin;
+package technicfan.lanlock.mixin;
 
 import net.minecraft.network.packet.c2s.login.LoginHelloC2SPacket;
 import net.minecraft.server.network.ServerLoginNetworkHandler;
@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import technicfan.lanlock.client.LANLockClient;
+import technicfan.lanlock.LANLock;
 
 @Mixin(ServerLoginNetworkHandler.class)
 public abstract class ServerLoginNetworkHandlerMixin {
@@ -24,9 +24,9 @@ public abstract class ServerLoginNetworkHandlerMixin {
         cancellable = true
     )
     private void checkPlayer(LoginHelloC2SPacket packet, CallbackInfo ci) {
-        if (LANLockClient.enabled() && packet != null) {
-            String id = LANLockClient.getUseUuid() ? packet.profileId().toString() : packet.name();
-            if (!LANLockClient.checkWhitelist(id)) {
+        if (LANLock.enabled() && packet != null) {
+            String id = LANLock.getUseUuid() ? packet.profileId().toString() : packet.name();
+            if (!LANLock.checkWhitelist(id)) {
                 disconnect(Text.translatable("multiplayer.disconnect.not_whitelisted"));
                 ci.cancel();
             }

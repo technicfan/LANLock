@@ -20,6 +20,17 @@ repositories {
     maven { url "https://maven.shedaniel.me/" }
 }
 
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"lanwhitelist" {
+			sourceSet sourceSets.main
+		}
+	}
+
+}
+
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"

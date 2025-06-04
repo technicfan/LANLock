@@ -13,12 +13,16 @@
     "icon": "assets/lanlock/icon.png",
     "environment": "client",
     "entrypoints": {
-        "client": ["technicfan.lanlock.client.LANLockClient"],
+        "main": [
+            "technicfan.lanlock.LANLock"
+        ],
         "modmenu": [
-            "technicfan.lanlock.client.config.LANLockModMenuIntegration"
+            "technicfan.lanlock.config.LANLockModMenuIntegration"
         ]
     },
-    "mixins": ["lanlock.mixins.json"],
+    "mixins": [
+        "lanlock.mixins.json"
+    ],
     "depends": {
         "fabricloader": ">=0.16.10",
         "minecraft": "~1.21",
