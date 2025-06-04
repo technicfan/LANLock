@@ -1,11 +1,12 @@
 {
-    "required": true,
-    "package": "technicfan.lanwhitelist.mixin",
-    "compatibilityLevel": "JAVA_21",
-    "mixins": [
-        "ServerLoginNetworkHandlerMixin"
-    ],
-    "injectors": {
-        "defaultRequire": 1
-    }
+	"required": true,
+	"minVersion": "0.8",
+	"package": "technicfan.lanwhitelist.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"ServerLoginNetworkHandlerMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
 }

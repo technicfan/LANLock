@@ -1,4 +1,4 @@
-package technicfan.lanwhitelist;
+package technicfan.lanwhitelist.client.config;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;

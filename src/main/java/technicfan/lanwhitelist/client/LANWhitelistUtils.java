@@ -1,4 +1,4 @@
-package technicfan.lanwhitelist;
+package technicfan.lanwhitelist.client;
 
 import java.util.ArrayList;
 
