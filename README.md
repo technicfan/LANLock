@@ -16,7 +16,7 @@ More and more players are using mods like [e4mc](https://github.com/vgskye/e4mc-
 But griefers have noticed this too and as LAN worlds provide no tooling to prevent anyone from joining, this starts to become a risk.
 With this mod I tried to recreate the Minecraft Server whitelist system as closely as possible (with my non existant Java knowledge).
 
-## Feature(s)
+## Features
 
 - a whitelist similar to the server counterpart
     - stores name and UUID
