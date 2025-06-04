@@ -5,12 +5,12 @@ import java.util.ArrayList;
 class Config {
     private boolean enabled;
     private boolean useUuid;
-    private Whitelist whitelist;
+    private ArrayList<Player> whitelist;
 
     public Config() {
         this.enabled = true;
         this.useUuid = true;
-        this.whitelist = new Whitelist();
+        this.whitelist = new ArrayList<>();
     }
 
     public boolean enabled() {
@@ -29,41 +29,12 @@ class Config {
         useUuid = newValue;
     }
 
-    public Whitelist whitelist() {
+    public ArrayList<Player> whitelist() {
         return whitelist;
     }
 
-    public void setWhitelist(Whitelist newList) {
+    public void setWhitelist(ArrayList<Player> newList) {
         whitelist = newList;
-    }
-}
-
-class Whitelist extends ArrayList<Player> {
-    public boolean contains(String value) {
-        String keyQuery = value.contains("-") ? "uuid" : "name";
-        for (Player player : this){
-            if (player.get(keyQuery).equals(value)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public String getCounterPart(String value) {
-        String keyQuery, keyResult;
-        if (value.contains("-")) {
-            keyQuery = "uuid";
-            keyResult = "name";
-        } else {
-            keyQuery = "name";
-            keyResult = "uuid";
-        }
-        for (Player player : this){
-            if (player.get(keyQuery).equals(value)) {
-                return player.get(keyResult);
-            }
-        }
-        return null;
     }
 }
 

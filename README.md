@@ -23,6 +23,8 @@ With this mod I tried to recreate the Minecraft Server whitelist system as close
     - UUID is used to check if connecting player is on the whitelist
 - config screen made with Cloth Config in modmenu for easy configuration
     - automatically resolves UUID for added playernames
+        - because I'm to lazy/stupid to do this asynchronous saving can take longer the more new players are added in one go
+    - option to disable the whitelist entirely
     - option to use names instead of UUIDs for checking (for testing)
 
 ## Technical

@@ -1,20 +1,11 @@
 package technicfan.lanwhitelist;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -54,59 +45,8 @@ public class LANWhitelistConfigScreen {
                 .setSaveConsumer(whitelist::set)
                 .build());
 
-        builder.setSavingRunnable(() -> save(enabled.get(), useUuid.get(), whitelist.get()));
+        builder.setSavingRunnable(() -> LANWhitelist.saveConfig(enabled.get(), useUuid.get(), whitelist.get()));
 
         return builder.build();
-    }
-
-    private static String getUuid(String name) {
-        if (LANWhitelist.checkWhitelist(name)) {
-            return LANWhitelist.getWhitelistCounterpart(name);
-        } else {
-            try (HttpClient client = HttpClient.newHttpClient()) {
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create("https://api.mojang.com/users/profiles/minecraft/" + name))
-                        .build();
-
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() == 200) {
-                    JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-
-                    return json.get("id").getAsString().replaceAll(
-                            "(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})",
-                            "$1-$2-$3-$4-$5"
-                    );
-                }
-                return "";
-            } catch (IOException | InterruptedException e) {
-                return "";
-            }
-        }
-    }
-
-    private static void save(boolean enabled, boolean useUuid, List<String> whitelist) {
-        ArrayList<String> removeIds = new ArrayList<>(Collections.emptyList());
-        Whitelist newList = new Whitelist();
-
-        for (String s : whitelist) {
-            String id = getUuid(s);
-            if ((!useUuid || !id.isEmpty()) && !newList.contains(s)) {
-                if (!id.isEmpty() &&
-                    (LANWhitelist.checkWhitelist(id) && !LANWhitelist.checkWhitelist(s))
-                ) removeIds.add(id);
-                newList.add(new Player(s, id));
-            }
-        }
-        for (String id : removeIds) {
-            newList.removeIf(player ->
-                    player.get("name")
-                        .equals(LANWhitelist.getWhitelistCounterpart(id)) &&
-                    player.get("uuid")
-                        .equals(id)
-            );
-        }
-
-        LANWhitelist.saveConfig(enabled, useUuid, newList);
     }
 }
