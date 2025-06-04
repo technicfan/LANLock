@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "id": "lanlock",
-    "version": "1.2",
+    "version": "${version}",
     "name": "LANLock",
     "description": "A mod to enforce a whitelist on LAN servers",
     "authors": ["technicfan"],
@@ -13,16 +13,10 @@
     "icon": "assets/lanlock/icon.png",
     "environment": "client",
     "entrypoints": {
-        "main": [
-            "technicfan.lanlock.LANLock"
-        ],
-        "modmenu": [
-            "technicfan.lanlock.config.LANLockModMenuIntegration"
-        ]
+        "main": ["technicfan.lanlock.LANLock"],
+        "modmenu": ["technicfan.lanlock.config.LANLockModMenuIntegration"]
     },
-    "mixins": [
-        "lanlock.mixins.json"
-    ],
+    "mixins": ["lanlock.mixins.json"],
     "depends": {
         "fabricloader": ">=0.16.10",
         "minecraft": "~1.21",
