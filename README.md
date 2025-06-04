@@ -13,7 +13,7 @@ Also a thanks to [Ovilli](https://github.com/Ovilli) for creating their mod that
 ## Reason for this mod
 
 More and more players are using mods like [e4mc](https://github.com/vgskye/e4mc-minecraft-architectury/) to make their LAN worlds publicly available.
-But griefers have noticed this too and as LAN worlds provide no tooling to prevent anyone from joining, this starts to become a risk.
+But griefers have noticed this too and as LAN worlds provide no tooling to prevent anyone from joining, this starts to become a risk (see this [video](https://www.youtube.com/watch?v=3tK06u22VQg)).
 With this mod I tried to recreate the Minecraft Server whitelist system as closely as possible (with my non existant Java knowledge).
 
 ## Features
