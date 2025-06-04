@@ -1,4 +1,4 @@
-package technicfan.lanwhitelist.client;
+package technicfan.lanlock.client;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,8 +22,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class LANWhitelistClient implements ClientModInitializer {
-	public static final String MOD_ID = "lanwhitelist";
+public class LANLockClient implements ClientModInitializer {
+	public static final String MOD_ID = "lanlock";
 	private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	private static File CONFIG_FILE;
 	private static Config CONFIG = new Config();
@@ -54,7 +54,7 @@ public class LANWhitelistClient implements ClientModInitializer {
 	private Config loadConfig() {
 		try {
 			try (FileReader reader = new FileReader(CONFIG_FILE)) {
-				LOGGER.info("Loaded LANWhitelist config");
+				LOGGER.info("Loaded LANLock config");
 				return new Gson().fromJson(reader, Config.class);
 			}
 		} catch (IOException e) {
@@ -126,7 +126,7 @@ public class LANWhitelistClient implements ClientModInitializer {
 				if (!id.isEmpty() &&
 						(checkWhitelist(id) && !checkWhitelist(s))
 				) removeIds.add(id);
-				newWhitelist.add(new Player(s, id));
+				newWhitelist.add(new Player(id, s));
 			}
 		}
 		for (String id : removeIds) {

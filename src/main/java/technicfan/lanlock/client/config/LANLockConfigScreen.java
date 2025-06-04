@@ -1,29 +1,29 @@
-package technicfan.lanwhitelist.client.config;
+package technicfan.lanlock.client.config;
 
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
-import technicfan.lanwhitelist.client.LANWhitelistClient;
+import technicfan.lanlock.client.LANLockClient;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static me.shedaniel.clothconfig2.api.ConfigBuilder.create;
 
-public class LANWhitelistConfigScreen {
+public class LANLockConfigScreen {
     public static Screen getScreen(Screen parent) {
         ConfigBuilder builder = create()
                 .setParentScreen(parent)
-                .setTitle(Text.of("LANWhitelist Config"));
+                .setTitle(Text.of("LANLock Config"));
 
-        ConfigCategory general = builder.getOrCreateCategory(Text.of("LANWhitelist Settings"));
+        ConfigCategory general = builder.getOrCreateCategory(Text.of("LANLock Settings"));
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
-        AtomicReference<Boolean> enabled = new AtomicReference<>(LANWhitelistClient.enabled());
-        AtomicReference<Boolean> useUuid = new AtomicReference<>(LANWhitelistClient.getUseUuid());
-        AtomicReference<List<String>> whitelist = new AtomicReference<>(LANWhitelistClient.getNames());
+        AtomicReference<Boolean> enabled = new AtomicReference<>(LANLockClient.enabled());
+        AtomicReference<Boolean> useUuid = new AtomicReference<>(LANLockClient.getUseUuid());
+        AtomicReference<List<String>> whitelist = new AtomicReference<>(LANLockClient.getNames());
 
         general.addEntry(entryBuilder.startBooleanToggle(
                 Text.of("Enabled"), enabled.get())
@@ -46,7 +46,7 @@ public class LANWhitelistConfigScreen {
                 .setSaveConsumer(whitelist::set)
                 .build());
 
-        builder.setSavingRunnable(() -> LANWhitelistClient.saveConfig(enabled.get(), useUuid.get(), whitelist.get()));
+        builder.setSavingRunnable(() -> LANLockClient.saveConfig(enabled.get(), useUuid.get(), whitelist.get()));
 
         return builder.build();
     }

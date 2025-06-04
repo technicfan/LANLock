@@ -1,4 +1,4 @@
-package technicfan.lanwhitelist.client;
+package technicfan.lanlock.client;
 
 import java.util.ArrayList;
 
@@ -39,18 +39,18 @@ class Config {
 }
 
 class Player {
-    private final String name;
     private final String uuid;
+    private final String name;
 
-    public Player(String name, String uuid) {
-        this.name = name;
+    public Player(String  uuid, String name) {
         this.uuid = uuid;
+        this.name = name;
     }
 
     public String get(String field) {
         return switch (field) {
-            case "name" -> name;
             case "uuid" -> uuid;
+            case "name" -> name;
             default -> null;
         };
     }

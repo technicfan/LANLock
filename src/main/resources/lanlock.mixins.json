@@ -1,0 +1,12 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "technicfan.lanlock.client.mixin",
+    "compatibilityLevel": "JAVA_21",
+    "client": [
+        "ServerLoginNetworkHandlerMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}
