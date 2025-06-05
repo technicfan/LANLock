@@ -11,7 +11,7 @@
         "issues": "https://github.com/technicfan/LANLock/issues"
     },
     "icon": "assets/lanlock/icon.png",
-    "environment": "client",
+    "environment": "*",
     "entrypoints": {
         "main": ["technicfan.lanlock.LANLock"],
         "modmenu": ["technicfan.lanlock.config.LANLockModMenuIntegration"]

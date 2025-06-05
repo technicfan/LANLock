@@ -89,7 +89,7 @@ public class LANLock implements ModInitializer {
 	public static List<String> getNames() {
 		ArrayList<String> names = new ArrayList<>(Collections.emptyList());
 		for (Map<String, String> user : CONFIG.whitelist()) {
-			if (CONFIG.useUuid() || !user.get("uuid").isEmpty()) names.add(user.get("name"));
+			if (!CONFIG.useUuid() || !user.get("uuid").isEmpty()) names.add(user.get("name"));
 		}
 		return names;
 	}
