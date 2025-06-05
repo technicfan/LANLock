@@ -131,6 +131,13 @@ public class LANLock implements ModInitializer {
 				}
 			}
 		}
+		if (getUseUuid() || useUuid) {
+			for (Map<String, String> player : CONFIG.whitelist()) {
+				if (player.get("uuid").isEmpty() && !newWhitelist.contains(player)) {
+					newWhitelist.add(player);
+				}
+			}
+		}
 		for (String id : removeIds) {
 			newWhitelist.removeIf(player ->
 					player.get("name")
