@@ -33,21 +33,21 @@ public class LANLock implements ModInitializer {
 		loadConfig();
 	}
 
-	private static String getWhitelistCounterpart(String id) {
-		String keyQuery, keyResult;
-		if (id.contains("-")) {
-			keyQuery = "uuid";
-			keyResult = "name";
-		} else {
-			keyQuery = "name";
-			keyResult = "uuid";
-		}
+	private static Map<String, String> getPlayerFromWhitelist(String id) {
+		String keyQuery = id.contains("-") ? "uuid" : "name";
 		for (Map<String, String> player : CONFIG.whitelist()){
-			if (player.get(keyQuery).equals(id)) {
-				return player.get(keyResult);
+			if (player.get(keyQuery).equalsIgnoreCase(id)) {
+				return player;
 			}
 		}
 		return null;
+	}
+
+	private static String getWhitelistCounterpart(String id) {
+		String keyResult = id.contains("-") ? "name" : "uuid";
+		Map<String, String> player = getPlayerFromWhitelist(id);
+		if (player == null) return null;
+		return player.get(keyResult);
 	}
 
 	public static List<String> getNames() {
@@ -70,13 +70,13 @@ public class LANLock implements ModInitializer {
 		return CONFIG.sendNotification();
 	}
 
-	private static String getUuid(String name) {
+	private static Map<String, String> getPlayer(String name) {
 		if (checkWhitelist(name)) {
-			return getWhitelistCounterpart(name);
+			return getPlayerFromWhitelist(name);
 		} else {
 			try (HttpClient client = HttpClient.newHttpClient()) {
 				HttpRequest request = HttpRequest.newBuilder()
-						.uri(URI.create("https://api.mojang.com/users/profiles/minecraft/" + name))
+						.uri(URI.create("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + name))
 						.build();
 
 				HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -84,13 +84,18 @@ public class LANLock implements ModInitializer {
 				if (response.statusCode() == 200) {
 					JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
 
-					return json.get("id").getAsString().replaceAll(
-							"(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})",
-							"$1-$2-$3-$4-$5"
+					return Map.of(
+						"uuid", json.get("id").getAsString().replaceAll(
+						"(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})",
+						"$1-$2-$3-$4-$5"),
+						"name", json.get("name").getAsString()
 					);
 				}
 			} catch (IOException | InterruptedException ignored) {}
-			return "";
+			return Map.of(
+				"uuid", "",
+				"name", name
+			);
 		}
 	}
 
@@ -106,7 +111,7 @@ public class LANLock implements ModInitializer {
 	public static boolean checkWhitelist(String id) {
 		String keyQuery = id.contains("-") ? "uuid" : "name";
 		for (Map<String, String> player : CONFIG.whitelist()){
-			if (player.get(keyQuery).equals(id)) {
+			if (player.get(keyQuery).equalsIgnoreCase(id)) {
 				return true;
 			}
 		}
@@ -115,12 +120,9 @@ public class LANLock implements ModInitializer {
 
 	private static Map<String, String> makePlayer(String name) {
 		if (!name.isEmpty()) {
-			String id = getUuid(name);
-			if (!CONFIG.useUuid() || !id.isEmpty()) {
-				return Map.of(
-						"uuid", id,
-						"name", name
-				);
+			Map<String, String> player = getPlayer(name);
+			if (!CONFIG.useUuid() || !player.get("uuid").isEmpty()) {
+				return player;
 			}
 		}
 		return null;
@@ -160,7 +162,7 @@ public class LANLock implements ModInitializer {
 		for (String id : removeIds) {
 			newWhitelist.removeIf(player ->
 					player.get("name")
-							.equals(getWhitelistCounterpart(id)) &&
+							.equalsIgnoreCase(getWhitelistCounterpart(id)) &&
 							player.get("uuid")
 									.equals(id)
 			);
@@ -183,9 +185,10 @@ public class LANLock implements ModInitializer {
 	}
 
 	// commands
-	public static boolean add(String name) {
+	public static Boolean add(String name) {
 		Map<String, String> player = makePlayer(name);
-		if (player != null && !CONFIG.whitelist().contains(player)) {
+		if (player == null) return null;
+		if (!CONFIG.whitelist().contains(player)) {
 			CONFIG.addToWhitelist(player);
 			saveToFile();
 			return true;

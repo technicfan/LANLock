@@ -14,51 +14,51 @@ import java.util.concurrent.CompletableFuture;
 public class LANLockClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(
-                ClientCommandManager.literal("lanlock")
-                    .then(ClientCommandManager.literal("list").executes(LANLockClient::list))
-                    .then(ClientCommandManager.literal("reload").executes(LANLockClient::reload))
-                    .then(ClientCommandManager.literal("add")
-                        .then(ClientCommandManager.argument("player", StringArgumentType.string())
-                            .suggests(new PlayerSuggestionProvider())
-                            .executes(LANLockClient::add)))
-                    .then(ClientCommandManager.literal("remove")
-                        .then(ClientCommandManager.argument("player", StringArgumentType.string())
-                            .suggests(new WhitelistPlayerSuggestionProvider())
-                            .executes(LANLockClient::remove)))
-                    .then(ClientCommandManager.literal("enabled")
-                        .then(ClientCommandManager.argument("enabled", BoolArgumentType.bool())
-                            .executes(LANLockClient::toggle))
-                        .executes(LANLockClient::enabled))
-                    .then(ClientCommandManager.literal("useUuid")
-                        .then(ClientCommandManager.argument("enabled", BoolArgumentType.bool())
-                            .executes(LANLockClient::toggleUseUuid))
-                        .executes(LANLockClient::useUuid))
-                    .then(ClientCommandManager.literal("notify")
-                        .then(ClientCommandManager.argument("enabled", BoolArgumentType.bool())
-                            .executes(LANLockClient::toggleNotify))
-                        .executes(LANLockClient::notify))
-            );
-        });
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(
+            ClientCommandManager.literal("lanlock")
+                .then(ClientCommandManager.literal("list").executes(LANLockClient::list))
+                .then(ClientCommandManager.literal("reload").executes(LANLockClient::reload))
+                .then(ClientCommandManager.literal("add")
+                    .then(ClientCommandManager.argument("player", StringArgumentType.string())
+                        .suggests(new PlayerSuggestionProvider())
+                        .executes(LANLockClient::add)))
+                .then(ClientCommandManager.literal("remove")
+                    .then(ClientCommandManager.argument("player", StringArgumentType.string())
+                        .suggests(new WhitelistPlayerSuggestionProvider())
+                        .executes(LANLockClient::remove)))
+                .then(ClientCommandManager.literal("on")
+                    .executes(LANLockClient::on))
+                .then(ClientCommandManager.literal("off")
+                    .executes(LANLockClient::off))
+                .then(ClientCommandManager.literal("useUuid")
+                    .then(ClientCommandManager.argument("enabled", BoolArgumentType.bool())
+                        .executes(LANLockClient::toggleUseUuid))
+                    .executes(LANLockClient::useUuid))
+                .then(ClientCommandManager.literal("notify")
+                    .then(ClientCommandManager.argument("enabled", BoolArgumentType.bool())
+                        .executes(LANLockClient::toggleNotify))
+                    .executes(LANLockClient::notify))
+        ));
     }
 
     private static int list(CommandContext<FabricClientCommandSource> commandContext) {
         if (LANLock.getNames().isEmpty()) {
-            commandContext.getSource().sendFeedback(Text.translatable("lanlock.command.whitelist.empty"));
+            commandContext.getSource().sendFeedback(Text.translatable("commands.whitelist.none"));
+            return 1;
         } else {
-            commandContext.getSource().sendFeedback(Text.translatable("lanlock.command.whitelist"));
+            commandContext.getSource().sendFeedback(
+                Text.translatable("commands.whitelist.list",
+                LANLock.getNames().size(),
+                String.join(", ", LANLock.getNames()))
+            );
+            return LANLock.getNames().size();
         }
-        for (String s : LANLock.getNames()) {
-            commandContext.getSource().sendFeedback(Text.literal("  " + s));
-        }
-        return 1;
     }
 
     private static int reload(CommandContext<FabricClientCommandSource> commandContext) {
         CompletableFuture.runAsync(() -> {
             LANLock.loadConfig();
-            commandContext.getSource().sendFeedback(Text.translatable("lanlock.command.reload"));
+            commandContext.getSource().sendFeedback(Text.translatable("commands.whitelist.reloaded"));
         });
         return 1;
     }
@@ -66,11 +66,13 @@ public class LANLockClient implements ClientModInitializer {
     private static int add(CommandContext<FabricClientCommandSource> commandContext) {
         String name = StringArgumentType.getString(commandContext, "player");
         CompletableFuture.runAsync(() -> {
-            boolean result = LANLock.add(name);
-            if (result) {
-                commandContext.getSource().sendFeedback(Text.translatable("lanlock.command.add", name));
+            Boolean result = LANLock.add(name);
+            if (result == null) {
+                commandContext.getSource().sendError(Text.translatable("argument.player.unknown"));
+            } else if (result) {
+                commandContext.getSource().sendFeedback(Text.translatable("commands.whitelist.add.success", name));
             } else {
-                commandContext.getSource().sendError(Text.translatable("lanlock.command.add.error", name));
+                commandContext.getSource().sendError(Text.translatable("commands.whitelist.add.failed"));
             }
         });
         return 1;
@@ -80,31 +82,33 @@ public class LANLockClient implements ClientModInitializer {
         String name = StringArgumentType.getString(commandContext, "player");
         boolean result = LANLock.remove(name);
         if (result) {
-            commandContext.getSource().sendFeedback(Text.translatable("lanlock.command.remove", name));
+            commandContext.getSource().sendFeedback(Text.translatable("commands.whitelist.remove.success", name));
         } else {
-            commandContext.getSource().sendError(Text.translatable("lanlock.command.remove.error", name));
+            commandContext.getSource().sendError(Text.translatable("commands.whitelist.remove.failed"));
         }
         return 1;
     }
 
-    private static int toggle(CommandContext<FabricClientCommandSource> commandContext) {
-        boolean enabled = BoolArgumentType.getBool(commandContext, "enabled");
-        LANLock.setEnabled(enabled);
-        if (enabled) {
-            commandContext.getSource().sendFeedback(Text.translatable("lanlock.command.enable"));
-        } else {
-            commandContext.getSource().sendFeedback(Text.translatable("lanlock.command.disable"));
-        }
-        return 1;
-    }
-
-    private static int enabled(CommandContext<FabricClientCommandSource> commandContext) {
+    private static int on(CommandContext<FabricClientCommandSource> commandContext) {
         if (LANLock.enabled()) {
-            commandContext.getSource().sendFeedback(Text.translatable("lanlock.command.disabled", "Whitelist"));
+            commandContext.getSource().sendFeedback(Text.translatable("commands.whitelist.alreadyOn"));
+            return 0;
         } else {
-            commandContext.getSource().sendFeedback(Text.literal("Whitelist is disabled"));
+            commandContext.getSource().sendFeedback(Text.translatable("commands.whitelist.enabled"));
+            LANLock.setEnabled(true);
+            return 1;
         }
-        return 1;
+    }
+
+    private static int off(CommandContext<FabricClientCommandSource> commandContext) {
+        if (!LANLock.enabled()) {
+            commandContext.getSource().sendFeedback(Text.translatable("commands.whitelist.alreadyOff"));
+            return 0;
+        } else {
+            commandContext.getSource().sendFeedback(Text.translatable("commands.whitelist.disabled"));
+            LANLock.setEnabled(false);
+            return 1;
+        }
     }
 
     private static int toggleUseUuid(CommandContext<FabricClientCommandSource> commandContext) {
