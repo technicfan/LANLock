@@ -8,6 +8,7 @@ import net.minecraft.text.Text;
 import technicfan.lanlock.LANLock;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static me.shedaniel.clothconfig2.api.ConfigBuilder.create;
@@ -23,6 +24,7 @@ public class LANLockConfigScreen {
 
         AtomicReference<Boolean> enabled = new AtomicReference<>(LANLock.enabled());
         AtomicReference<Boolean> useUuid = new AtomicReference<>(LANLock.getUseUuid());
+        AtomicReference<Boolean> sendNotifications = new AtomicReference<>(LANLock.getSendNotification());
         AtomicReference<List<String>> whitelist = new AtomicReference<>(LANLock.getNames());
 
         general.addEntry(entryBuilder.startBooleanToggle(
@@ -39,6 +41,13 @@ public class LANLockConfigScreen {
                 .setSaveConsumer(useUuid::set)
                 .build());
 
+        general.addEntry(entryBuilder.startBooleanToggle(
+                Text.translatable("lanlock.config.sendNotification"), sendNotifications.get())
+                .setTooltip(Text.translatable("lanlock.config.sendNotification.description"))
+                .setDefaultValue(true)
+                .setSaveConsumer(sendNotifications::set)
+                .build());
+
         general.addEntry(entryBuilder.startStrList
                 (Text.translatable("lanlock.config.whitelist"), whitelist.get())
                 .setTooltip(Text.translatable("lanlock.config.whitelist.description"))
@@ -46,7 +55,7 @@ public class LANLockConfigScreen {
                 .setSaveConsumer(whitelist::set)
                 .build());
 
-        builder.setSavingRunnable(() -> LANLock.saveConfig(enabled.get(), useUuid.get(), whitelist.get()));
+        builder.setSavingRunnable(() -> CompletableFuture.runAsync(() -> LANLock.saveConfig(enabled.get(), useUuid.get(), sendNotifications.get(), whitelist.get())));
 
         return builder.build();
     }

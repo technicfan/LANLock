@@ -14,6 +14,7 @@
     "environment": "*",
     "entrypoints": {
         "main": ["technicfan.lanlock.LANLock"],
+        "client": ["technicfan.lanlock.LANLockClient"],
         "modmenu": ["technicfan.lanlock.config.LANLockModMenuIntegration"]
     },
     "mixins": ["lanlock.mixins.json"],

@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +30,7 @@ public class LANLock implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID + ".json").toFile();
-		if (CONFIG_FILE.exists()) CONFIG = loadConfig();
+		loadConfig();
 	}
 
 	private static String getWhitelistCounterpart(String id) {
@@ -48,16 +50,24 @@ public class LANLock implements ModInitializer {
 		return null;
 	}
 
-	private LANLockConfig loadConfig() {
-		try {
-			try (FileReader reader = new FileReader(CONFIG_FILE)) {
-				LOGGER.info("Loaded LANLock config");
-				return new Gson().fromJson(reader, LANLockConfig.class);
-			}
-		} catch (IOException e) {
-			LOGGER.error(Arrays.toString(e.getStackTrace()));
+	public static List<String> getNames() {
+		ArrayList<String> names = new ArrayList<>(Collections.emptyList());
+		for (Map<String, String> user : CONFIG.whitelist()) {
+			if (!CONFIG.useUuid() || !user.get("uuid").isEmpty()) names.add(user.get("name"));
 		}
-		return new LANLockConfig();
+		return names;
+	}
+
+	public static boolean getUseUuid() {
+		return CONFIG.useUuid();
+	}
+
+	public static boolean enabled() {
+		return CONFIG.enabled();
+	}
+
+	public static boolean getSendNotification() {
+		return CONFIG.sendNotification();
 	}
 
 	private static String getUuid(String name) {
@@ -79,29 +89,19 @@ public class LANLock implements ModInitializer {
 							"$1-$2-$3-$4-$5"
 					);
 				}
-				return "";
-			} catch (IOException | InterruptedException e) {
-				return "";
-			}
+			} catch (IOException | InterruptedException ignored) {}
+			return "";
 		}
 	}
 
-	public static List<String> getNames() {
-		ArrayList<String> names = new ArrayList<>(Collections.emptyList());
-		for (Map<String, String> user : CONFIG.whitelist()) {
-			if (!CONFIG.useUuid() || !user.get("uuid").isEmpty()) names.add(user.get("name"));
-		}
-		return names;
+	public static void disconnectCallback(ServerPlayerEntity host, String player) {
+		MutableText message = Text.translatable("lanlock.notification", player).append(Text.literal(" "))
+			.append(Text.translatable("lanlock.notification.add")
+				.setStyle(Style.EMPTY
+					.withColor(65280).withBold(true)
+					.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/lanlock add " + player))));
+		host.sendMessage(message, false);
 	}
-
-	public static boolean getUseUuid() {
-		return CONFIG.useUuid();
-	}
-
-	public static boolean enabled() {
-		return CONFIG.enabled();
-	}
-
 
 	public static boolean checkWhitelist(String id) {
 		String keyQuery = id.contains("-") ? "uuid" : "name";
@@ -113,23 +113,42 @@ public class LANLock implements ModInitializer {
 		return false;
 	}
 
-	public static void saveConfig(boolean enabled, boolean useUuid, List<String> whitelist) {
+	private static Map<String, String> makePlayer(String name) {
+		if (!name.isEmpty()) {
+			String id = getUuid(name);
+			if (!CONFIG.useUuid() || !id.isEmpty()) {
+				return Map.of(
+						"uuid", id,
+						"name", name
+				);
+			}
+		}
+		return null;
+	}
+
+	public static void loadConfig() {
+		if (CONFIG_FILE.exists()) {
+			try {
+				try (FileReader reader = new FileReader(CONFIG_FILE)) {
+					LOGGER.info("Loaded LANLock config");
+					CONFIG = new Gson().fromJson(reader, LANLockConfig.class);
+				}
+			} catch (IOException e) {
+				LOGGER.error(Arrays.toString(e.getStackTrace()));
+			}
+		}
+	}
+
+	public static void saveConfig(boolean enabled, boolean useUuid, boolean sendNotifications, List<String> whitelist) {
 		ArrayList<String> removeIds = new ArrayList<>(Collections.emptyList());
 		ArrayList<Map<String, String>> newWhitelist = new ArrayList<>();
 
 		for (String s : whitelist.stream().sorted().distinct().toList()) {
-			if (!s.isEmpty()) {
-				String id = getUuid(s);
-				if (!useUuid || !id.isEmpty()) {
-					if (!id.isEmpty() &&
-							(checkWhitelist(id) && !checkWhitelist(s))
-					) removeIds.add(id);
-					newWhitelist.add(Map.of(
-							"uuid", id,
-							"name", s
-					));
-				}
-			}
+			Map<String, String> player = makePlayer(s);
+			if (player != null && !player.get("uuid").isEmpty() &&
+					(checkWhitelist(player.get("uuid")) && !checkWhitelist(s))
+			) removeIds.add(player.get("uuid"));
+			if (player != null) newWhitelist.add(player);
 		}
 		if (getUseUuid() || useUuid) {
 			for (Map<String, String> player : CONFIG.whitelist()) {
@@ -149,12 +168,61 @@ public class LANLock implements ModInitializer {
 
 		CONFIG.setEnabled(enabled);
 		CONFIG.setUseUuid(useUuid);
+		CONFIG.setSendNotification(sendNotifications);
 		CONFIG.setWhitelist(newWhitelist);
+		saveToFile();
+	}
+
+	private static void saveToFile() {
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
 			writer.write(gson.toJson(CONFIG));
 		} catch (IOException e) {
 			LOGGER.error(Arrays.toString(e.getStackTrace()));
+		}
+	}
+
+	// commands
+	public static boolean add(String name) {
+		Map<String, String> player = makePlayer(name);
+		if (player != null && !CONFIG.whitelist().contains(player)) {
+			CONFIG.addToWhitelist(player);
+			saveToFile();
+			return true;
+		}
+		return false;
+	}
+
+	public static boolean remove(String name) {
+		if (checkWhitelist(name)) {
+			CONFIG.removeFromWhitelist(Map.of(
+					"uuid", Objects.requireNonNull(getWhitelistCounterpart(name)),
+					"name", name
+			));
+			saveToFile();
+			return true;
+		}
+		return false;
+	}
+
+	public static void setEnabled(boolean value) {
+		if (CONFIG.enabled() != value) {
+			CONFIG.setEnabled(value);
+			saveToFile();
+		}
+	}
+
+	public static void setUseUuid(boolean value) {
+		if (CONFIG.useUuid() != value) {
+			CONFIG.setUseUuid(value);
+			saveToFile();
+		}
+	}
+
+	public static void setSendNotification(boolean value) {
+		if (CONFIG.sendNotification() != value) {
+			CONFIG.setSendNotification(value);
+			saveToFile();
 		}
 	}
 }
