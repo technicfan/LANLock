@@ -64,12 +64,11 @@ public class LANLockClient implements ClientModInitializer {
     }
 
     private static int add(CommandContext<FabricClientCommandSource> commandContext) {
-        String name = StringArgumentType.getString(commandContext, "player");
         CompletableFuture.runAsync(() -> {
-            Boolean result = LANLock.add(name);
-            if (result == null) {
+            String name = LANLock.add(StringArgumentType.getString(commandContext, "player"));
+            if (name == null) {
                 commandContext.getSource().sendError(Text.translatable("argument.player.unknown"));
-            } else if (result) {
+            } else if (!name.isEmpty()) {
                 commandContext.getSource().sendFeedback(Text.translatable("commands.whitelist.add.success", name));
             } else {
                 commandContext.getSource().sendError(Text.translatable("commands.whitelist.add.failed"));

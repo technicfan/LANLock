@@ -1,6 +1,9 @@
 {
     "lanlock.notification": "%1$s tried to join",
     "lanlock.notification.add": "Add to whitelist",
+    "lanlock.notification.offline": "(offline)",
+    "lanlock.notification.add.offline": "To add offline players disable UUID usage",
+    "lanlock.notification.offline.disabled": "Offline player %1$s is on the whitelist but failed to join because UUID usage is enabled",
     "lanlock.config.title": "LANLock Config",
     "lanlock.config.general": "LANLock Settings",
     "lanlock.config.enabled": "Enabled",

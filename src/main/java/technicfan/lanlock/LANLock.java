@@ -6,8 +6,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +41,7 @@ public class LANLock implements ModInitializer {
 		return null;
 	}
 
-	private static String getWhitelistCounterpart(String id) {
+	public static String getWhitelistCounterpart(String id) {
 		String keyResult = id.contains("-") ? "name" : "uuid";
 		Map<String, String> player = getPlayerFromWhitelist(id);
 		if (player == null) return null;
@@ -97,15 +95,6 @@ public class LANLock implements ModInitializer {
 				"name", name
 			);
 		}
-	}
-
-	public static void disconnectCallback(ServerPlayerEntity host, String player) {
-		MutableText message = Text.translatable("lanlock.notification", player).append(Text.literal(" "))
-			.append(Text.translatable("lanlock.notification.add")
-				.setStyle(Style.EMPTY
-					.withColor(65280).withBold(true)
-					.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/lanlock add " + player))));
-		host.sendMessage(message, false);
 	}
 
 	public static boolean checkWhitelist(String id) {
@@ -185,15 +174,15 @@ public class LANLock implements ModInitializer {
 	}
 
 	// commands
-	public static Boolean add(String name) {
+	public static String add(String name) {
 		Map<String, String> player = makePlayer(name);
 		if (player == null) return null;
 		if (!CONFIG.whitelist().contains(player)) {
 			CONFIG.addToWhitelist(player);
 			saveToFile();
-			return true;
+			return player.get("name");
 		}
-		return false;
+		return "";
 	}
 
 	public static boolean remove(String name) {
