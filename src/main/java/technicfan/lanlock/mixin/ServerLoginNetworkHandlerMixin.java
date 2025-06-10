@@ -20,7 +20,6 @@ import technicfan.lanlock.LANLock;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
-import java.text.Normalizer;
 import java.util.Objects;
 import java.util.UUID;
 
