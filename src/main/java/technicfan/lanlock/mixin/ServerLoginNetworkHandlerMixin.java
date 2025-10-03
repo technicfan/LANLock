@@ -16,9 +16,13 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import com.mojang.authlib.GameProfile;
+
 import technicfan.lanlock.LANLock;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
@@ -46,7 +50,13 @@ public abstract class ServerLoginNetworkHandlerMixin {
             if (!LANLock.checkWhitelist(id)) {
                 disconnect(Text.translatable("multiplayer.disconnect.not_whitelisted"));
                 if (LANLock.getSendNotification() && server.getHostProfile() != null) {
-                    ServerPlayerEntity host = server.getPlayerManager().getPlayer(server.getHostProfile().getId());
+                    Method getId;
+                    try {
+                        getId = GameProfile.class.getMethod("id");
+                    } catch (Exception e) {
+                        getId = GameProfile.class.getMethod("getId");
+                    }
+                    ServerPlayerEntity host = server.getPlayerManager().getPlayer((UUID) getId.invoke(server.getHostProfile()));
                     if (host != null) {
                         boolean offline = packet.profileId().equals(
                             UUID.nameUUIDFromBytes(("OfflinePlayer:" + packet.name()).getBytes(StandardCharsets.UTF_8))
