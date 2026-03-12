@@ -15,12 +15,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.mojang.authlib.GameProfile;
-
 import technicfan.lanlock.LANLock;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
@@ -42,19 +38,18 @@ public abstract class ServerLoginNetworkHandlerMixin {
         ),
         cancellable = true
     )
-    private void checkPlayer(ServerboundHelloPacket packet, CallbackInfo ci) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    private void checkPlayer(ServerboundHelloPacket packet, CallbackInfo ci) {
         if (LANLock.enabled() && packet != null) {
             String id = LANLock.getUseUuid() ? packet.profileId().toString() : packet.name();
             if (!LANLock.checkWhitelist(id)) {
                 disconnect(Component.translatable("multiplayer.disconnect.not_whitelisted"));
                 if (LANLock.getSendNotification() && server.getSingleplayerProfile() != null) {
-                    Method getId;
-                    try {
-                        getId = GameProfile.class.getMethod("id");
-                    } catch (Exception e) {
-                        getId = GameProfile.class.getMethod("getId");
-                    }
-                    ServerPlayer host = server.getPlayerList().getPlayer((UUID) getId.invoke(server.getSingleplayerProfile()));
+                    ServerPlayer host = server.getPlayerList().getPlayer(server.getSingleplayerProfile()
+                        //? if <=1.21.4 {
+                        .getId()
+                        //?} else
+                        /*.id()*/
+                    );
                     if (host != null) {
                         boolean offline = packet.profileId().equals(
                             //? if <=1.20.1
