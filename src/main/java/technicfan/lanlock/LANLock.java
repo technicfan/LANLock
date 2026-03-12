@@ -72,7 +72,8 @@ public class LANLock implements ModInitializer {
 		if (checkWhitelist(name)) {
 			return getPlayerFromWhitelist(name);
 		} else {
-			try (HttpClient client = HttpClient.newHttpClient()) {
+			try {
+                HttpClient client = HttpClient.newHttpClient();
 				HttpRequest request = HttpRequest.newBuilder()
 						.uri(URI.create("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + name))
 						.build();

@@ -37,8 +37,8 @@ public abstract class ServerLoginNetworkHandlerMixin {
     @Inject(
         method = "handleHello",
         at = @At(
-                value = "INVOKE",
-                target = "Lnet/minecraft/server/MinecraftServer;usesAuthentication()Z"
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/MinecraftServer;usesAuthentication()Z"
         ),
         cancellable = true
     )
@@ -57,7 +57,11 @@ public abstract class ServerLoginNetworkHandlerMixin {
                     ServerPlayer host = server.getPlayerList().getPlayer((UUID) getId.invoke(server.getSingleplayerProfile()));
                     if (host != null) {
                         boolean offline = packet.profileId().equals(
+                            //? if <=1.20.1
+                            /*java.util.Optional.of(*/
                             UUID.nameUUIDFromBytes(("OfflinePlayer:" + packet.name()).getBytes(StandardCharsets.UTF_8))
+                            //? if <=1.20.1
+                            /*)*/
                         );
                         if (!LANLock.getUseUuid() || !offline || !LANLock.checkWhitelist(packet.name())) {
                             MutableComponent message = Component.translatable("lanlock.notification", packet.name());
