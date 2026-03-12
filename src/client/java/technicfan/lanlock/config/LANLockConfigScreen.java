@@ -3,8 +3,8 @@ package technicfan.lanlock.config;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import technicfan.lanlock.LANLock;
 
 import java.util.List;
@@ -17,9 +17,9 @@ public class LANLockConfigScreen {
     public static Screen getScreen(Screen parent) {
         ConfigBuilder builder = create()
                 .setParentScreen(parent)
-                .setTitle(Text.translatable("lanlock.config.title"));
+                .setTitle(Component.translatable("lanlock.config.title"));
 
-        ConfigCategory general = builder.getOrCreateCategory(Text.translatable("lanlock.config.general"));
+        ConfigCategory general = builder.getOrCreateCategory(Component.translatable("lanlock.config.general"));
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
         AtomicReference<Boolean> enabled = new AtomicReference<>(LANLock.enabled());
@@ -28,29 +28,29 @@ public class LANLockConfigScreen {
         AtomicReference<List<String>> whitelist = new AtomicReference<>(LANLock.getNames());
 
         general.addEntry(entryBuilder.startBooleanToggle(
-                Text.translatable("lanlock.config.enabled"), enabled.get())
-                .setTooltip(Text.translatable("lanlock.config.enabled.description"))
+                Component.translatable("lanlock.config.enabled"), enabled.get())
+                .setTooltip(Component.translatable("lanlock.config.enabled.description"))
                 .setDefaultValue(true)
                 .setSaveConsumer(enabled::set)
                 .build());
 
         general.addEntry(entryBuilder.startBooleanToggle(
-                Text.translatable("lanlock.config.useUuid"), useUuid.get())
-                .setTooltip(Text.translatable("lanlock.config.useUuid.description"))
+                Component.translatable("lanlock.config.useUuid"), useUuid.get())
+                .setTooltip(Component.translatable("lanlock.config.useUuid.description"))
                 .setDefaultValue(true)
                 .setSaveConsumer(useUuid::set)
                 .build());
 
         general.addEntry(entryBuilder.startBooleanToggle(
-                Text.translatable("lanlock.config.sendNotification"), sendNotifications.get())
-                .setTooltip(Text.translatable("lanlock.config.sendNotification.description"))
+                Component.translatable("lanlock.config.sendNotification"), sendNotifications.get())
+                .setTooltip(Component.translatable("lanlock.config.sendNotification.description"))
                 .setDefaultValue(true)
                 .setSaveConsumer(sendNotifications::set)
                 .build());
 
         general.addEntry(entryBuilder.startStrList
-                (Text.translatable("lanlock.config.whitelist"), whitelist.get())
-                .setTooltip(Text.translatable("lanlock.config.whitelist.description"))
+                (Component.translatable("lanlock.config.whitelist"), whitelist.get())
+                .setTooltip(Component.translatable("lanlock.config.whitelist.description"))
                 .setExpanded(true)
                 .setSaveConsumer(whitelist::set)
                 .build());

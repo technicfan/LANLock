@@ -1,15 +1,13 @@
 package technicfan.lanlock.mixin;
 
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.MappingResolver;
-import net.minecraft.network.packet.c2s.login.LoginHelloC2SPacket;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.protocol.login.ServerboundHelloPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerLoginNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerLoginPacketListenerImpl;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,72 +25,66 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
 
-@Mixin(ServerLoginNetworkHandler.class)
+@Mixin(ServerLoginPacketListenerImpl.class)
 public abstract class ServerLoginNetworkHandlerMixin {
     @Final
     @Shadow
     MinecraftServer server;
 
     @Shadow
-    public abstract void disconnect(Text text);
+    public abstract void disconnect(Component text);
 
     @Inject(
-        method = "onHello",
+        method = "handleHello",
         at = @At(
                 value = "INVOKE",
-                target = "Lnet/minecraft/server/MinecraftServer;isOnlineMode()Z"
+                target = "Lnet/minecraft/server/MinecraftServer;usesAuthentication()Z"
         ),
         cancellable = true
     )
-    private void checkPlayer(LoginHelloC2SPacket packet, CallbackInfo ci) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    private void checkPlayer(ServerboundHelloPacket packet, CallbackInfo ci) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if (LANLock.enabled() && packet != null) {
             String id = LANLock.getUseUuid() ? packet.profileId().toString() : packet.name();
             if (!LANLock.checkWhitelist(id)) {
-                disconnect(Text.translatable("multiplayer.disconnect.not_whitelisted"));
-                if (LANLock.getSendNotification() && server.getHostProfile() != null) {
+                disconnect(Component.translatable("multiplayer.disconnect.not_whitelisted"));
+                if (LANLock.getSendNotification() && server.getSingleplayerProfile() != null) {
                     Method getId;
                     try {
                         getId = GameProfile.class.getMethod("id");
                     } catch (Exception e) {
                         getId = GameProfile.class.getMethod("getId");
                     }
-                    ServerPlayerEntity host = server.getPlayerManager().getPlayer((UUID) getId.invoke(server.getHostProfile()));
+                    ServerPlayer host = server.getPlayerList().getPlayer((UUID) getId.invoke(server.getSingleplayerProfile()));
                     if (host != null) {
                         boolean offline = packet.profileId().equals(
                             UUID.nameUUIDFromBytes(("OfflinePlayer:" + packet.name()).getBytes(StandardCharsets.UTF_8))
                         );
                         if (!LANLock.getUseUuid() || !offline || !LANLock.checkWhitelist(packet.name())) {
-                            MutableText message = Text.translatable("lanlock.notification", packet.name());
-                            if (offline) message.append(Text.literal(" ")).append(Text.translatable("lanlock.notification.offline"));
+                            MutableComponent message = Component.translatable("lanlock.notification", packet.name());
+                            if (offline) message.append(Component.literal(" ")).append(Component.translatable("lanlock.notification.offline"));
                             // send notification
-                            host.sendMessage(message, false);
+                            host.sendSystemMessage(message, false);
 
                             if (offline && LANLock.getUseUuid()) {
                                 // send hint for notification
-                                host.sendMessage(Text.translatable("lanlock.notification.add.offline")
-                                    .formatted(Formatting.BOLD), false);
+                                host.sendSystemMessage(Component.translatable("lanlock.notification.add.offline")
+                                    .withStyle(ChatFormatting.BOLD), false);
                             } else {
-                                ClickEvent event;
-                                try {
-                                    MappingResolver resolver = FabricLoader.getInstance().getMappingResolver();
-                                    // check if net.minecraft.text.ClickEvent$RunCommand exists (1.21.5+)
-                                    Class<?> clazz = Class.forName(resolver.mapClassName("intermediary", "net.minecraft.class_2558$class_10609"));
-                                    event = (ClickEvent) clazz.getDeclaredConstructor(String.class).newInstance("/lanlock add " + packet.name());
-                                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                                    event = ClickEvent.class.getConstructor(ClickEvent.Action.class, String.class).newInstance(ClickEvent.Action.RUN_COMMAND, "/lanlock add " + packet.name());
-                                }
-                                ClickEvent finalEvent = event;
+                                //? if <=1.21.4 {
+                                ClickEvent event = new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/lanlock add " + packet.name());
+                                //?} else
+                                /*ClickEvent event = new ClickEvent.RunCommand("/lanlock add " + packet.name());*/
                                 // send action for notification
-                                host.sendMessage(Text.translatable("lanlock.notification.add")
-                                    .formatted(Formatting.GREEN, Formatting.BOLD)
-                                    .styled(style -> style
-                                        .withClickEvent(finalEvent)
+                                host.sendSystemMessage(Component.translatable("lanlock.notification.add")
+                                    .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD)
+                                    .withStyle(style -> style
+                                        .withClickEvent(event)
                                     ), false
                                 );
                             }
                         } else {
                             if (Objects.requireNonNull(LANLock.getWhitelistCounterpart(packet.name())).isEmpty())
-                                host.sendMessage(Text.translatable("lanlock.notification.offline.disabled", packet.name()), false);
+                                host.sendSystemMessage(Component.translatable("lanlock.notification.offline.disabled", packet.name()), false);
                         }
                     }
                 }
