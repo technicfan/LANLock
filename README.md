@@ -1,3 +1,7 @@
+**Note:** This is not needed for e4mc 5.4.0+ as they implemented a whitelist there
+
+---
+
 # LANLock
 
 A few days ago, I stumbled across [LANGuard](https://github.com/Ovilli/LANGuard),
@@ -26,6 +30,12 @@ With this mod I tried to recreate the Minecraft Server whitelist system as close
     - option to disable the whitelist entirely
     - option to use names instead of UUIDs for checking (for testing)
 - same options accessible via the client side command `/lanlock`
+
+## Important
+
+As of version `1.3.5`, [Cloth Config API](https://modrinth.com/mod/cloth-config) is not a hard dependency anymore.
+
+So if you want to configure the mod via Modmenu in a GUI, you need to install both Modmenu and Cloth Config API by yourself.
 
 ## Technical
 
