@@ -40,10 +40,11 @@ public abstract class ServerLoginNetworkHandlerMixin {
     )
     private void checkPlayer(ServerboundHelloPacket packet, CallbackInfo ci) {
         if (LANLock.enabled() && packet != null) {
-            String id = LANLock.getUseUuid() ? packet.profileId()
-                //? if <=1.20.1
-                /*.get()*/
-                .toString() : packet.name();
+            //? if >1.20.1 {
+            String uuid = packet.profileId().toString();
+            //?} else
+            /*String uuid = packet.profileId().isPresent() ? packet.profileId().get().toString() : "None";*/
+            String id = LANLock.getUseUuid() ? uuid : packet.name();
             if (!LANLock.checkWhitelist(id)) {
                 disconnect(Component.translatable("multiplayer.disconnect.not_whitelisted"));
                 if (LANLock.getSendNotification() && server.getSingleplayerProfile() != null) {
