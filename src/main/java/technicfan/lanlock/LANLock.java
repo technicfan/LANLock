@@ -135,13 +135,14 @@ public class LANLock implements ModInitializer {
 		ArrayList<String> removeIds = new ArrayList<>(Collections.emptyList());
 		ArrayList<Map<String, String>> newWhitelist = new ArrayList<>();
 
-		for (String s : whitelist.stream().sorted().distinct().toList()) {
+        whitelist.stream().sorted().map(String::toLowerCase).distinct().forEach(s -> {
 			Map<String, String> player = makePlayer(s);
-			if (player != null && !player.get("uuid").isEmpty() &&
-					(checkWhitelist(player.get("uuid")) && !checkWhitelist(s))
-			) removeIds.add(player.get("uuid"));
+			if (player != null && !player.get("uuid").isEmpty()
+                    && (checkWhitelist(player.get("uuid")) && !checkWhitelist(s))) {
+                removeIds.add(player.get("uuid"));
+            }
 			if (player != null) newWhitelist.add(player);
-		}
+        });
 		if (getUseUuid() || useUuid) {
 			for (Map<String, String> player : CONFIG.whitelist()) {
 				if (player.get("uuid").isEmpty() && !newWhitelist.contains(player)) {
