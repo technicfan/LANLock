@@ -55,7 +55,7 @@ public class LANLockConfigScreen {
                 .setSaveConsumer(whitelist::set)
                 .build());
 
-        builder.setSavingRunnable(() -> CompletableFuture.runAsync(() -> LANLock.saveConfig(enabled.get(), useUuid.get(), sendNotifications.get(), whitelist.get())));
+        builder.setSavingRunnable(() -> CompletableFuture.runAsync(() -> LANLock.updateConfig(enabled.get(), useUuid.get(), sendNotifications.get(), whitelist.get())));
 
         return builder.build();
     }

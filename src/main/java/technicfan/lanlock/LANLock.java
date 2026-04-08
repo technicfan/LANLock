@@ -23,7 +23,7 @@ public class LANLock implements ModInitializer {
 	public static final String MOD_ID = "lanlock";
 	private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	private static File CONFIG_FILE;
-	private static LANLockConfig CONFIG = new LANLockConfig();
+	private static Config CONFIG = new Config();
 
 	@Override
 	public void onInitialize() {
@@ -31,29 +31,19 @@ public class LANLock implements ModInitializer {
 		loadConfig();
 	}
 
-	private static Map<String, String> getPlayerFromWhitelist(String id) {
-		String keyQuery = id.contains("-") ? "uuid" : "name";
-		for (Map<String, String> player : CONFIG.whitelist()){
-			if (player.get(keyQuery).equalsIgnoreCase(id)) {
-				return player;
-			}
-		}
-		return null;
+	private static PlayerEntry getPlayerFromWhitelist(String id) {
+		return CONFIG.whitelistPlayer(id);
 	}
 
 	public static String getWhitelistCounterpart(String id) {
 		String keyResult = id.contains("-") ? "name" : "uuid";
-		Map<String, String> player = getPlayerFromWhitelist(id);
+		PlayerEntry player = CONFIG.whitelistPlayer(id);
 		if (player == null) return null;
 		return player.get(keyResult);
 	}
 
 	public static List<String> getNames() {
-		ArrayList<String> names = new ArrayList<>(Collections.emptyList());
-		for (Map<String, String> user : CONFIG.whitelist()) {
-			if (!CONFIG.useUuid() || !user.get("uuid").isEmpty()) names.add(user.get("name"));
-		}
-		return names;
+		return CONFIG.whitelistNames(true);
 	}
 
 	public static boolean getUseUuid() {
@@ -68,62 +58,53 @@ public class LANLock implements ModInitializer {
 		return CONFIG.sendNotification();
 	}
 
-	private static Map<String, String> getPlayer(String name) {
-		if (checkWhitelist(name)) {
-			return getPlayerFromWhitelist(name);
-		} else {
-			try {
-                HttpClient client = HttpClient.newHttpClient();
-				HttpRequest request = HttpRequest.newBuilder()
-						.uri(URI.create("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + name))
-						.build();
+	private static PlayerEntry getPlayer(String name, boolean allowOffline) {
+		if (!name.isEmpty()) {
+            PlayerEntry player;
+            if (checkWhitelist(name)) {
+                player = getPlayerFromWhitelist(name);
+            } else {
+                try {
+                    HttpClient client = HttpClient.newHttpClient();
+                    HttpRequest request = HttpRequest.newBuilder()
+                            .uri(URI.create("https://api.minecraftservices.com/minecraft/profile/lookup/name/" + name))
+                            .build();
 
-				HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-				if (response.statusCode() == 200) {
-					JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+                    if (response.statusCode() == 200) {
+                        JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
 
-					return Map.of(
-						"uuid", json.get("id").getAsString().replaceAll(
-						"(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})",
-						"$1-$2-$3-$4-$5"),
-						"name", json.get("name").getAsString()
-					);
-				}
-			} catch (IOException | InterruptedException ignored) {}
-			return Map.of(
-				"uuid", "",
-				"name", name
-			);
-		}
+                        player = new PlayerEntry(
+                            json.get("id").getAsString().replaceAll(
+                            "(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})",
+                            "$1-$2-$3-$4-$5"),
+                            json.get("name").getAsString()
+                        );
+                    } else {
+                        throw new InterruptedException();
+                    }
+                } catch (IOException | InterruptedException e) {
+                    player = new PlayerEntry("", name);
+                }
+            }
+			if (allowOffline || !player.uuid.isEmpty()) {
+				return player;
+			}
+        }
+        return null;
 	}
 
 	public static boolean checkWhitelist(String id) {
-		String keyQuery = id.contains("-") ? "uuid" : "name";
-		for (Map<String, String> player : CONFIG.whitelist()){
-			if (player.get(keyQuery).equalsIgnoreCase(id)) {
-				return true;
-			}
-		}
-		return false;
+		return CONFIG.whitelistContains(id);
 	}
 
-	private static Map<String, String> makePlayer(String name) {
-		if (!name.isEmpty()) {
-			Map<String, String> player = getPlayer(name);
-			if (!CONFIG.useUuid() || !player.get("uuid").isEmpty()) {
-				return player;
-			}
-		}
-		return null;
-	}
-
-	public static void loadConfig() {
+	protected static void loadConfig() {
 		if (CONFIG_FILE.exists()) {
 			try {
 				try (FileReader reader = new FileReader(CONFIG_FILE)) {
 					LOGGER.info("Loaded LANLock config");
-					CONFIG = new Gson().fromJson(reader, LANLockConfig.class);
+					CONFIG = new Gson().fromJson(reader, Config.class);
 				}
 			} catch (IOException e) {
 				LOGGER.error(Arrays.toString(e.getStackTrace()));
@@ -131,42 +112,34 @@ public class LANLock implements ModInitializer {
 		}
 	}
 
-	public static void saveConfig(boolean enabled, boolean useUuid, boolean sendNotifications, List<String> whitelist) {
-		ArrayList<String> removeIds = new ArrayList<>(Collections.emptyList());
-		ArrayList<Map<String, String>> newWhitelist = new ArrayList<>();
+	public static void updateConfig(boolean enabled, boolean useUuid, boolean sendNotification, List<String> whitelist) {
+        ArrayList<PlayerEntry> newWhitelist = new ArrayList<>(CONFIG.whitelist());
+        ArrayList<String> names = new ArrayList<>(CONFIG.whitelistNames(false));
+        List<String> offlineNames = CONFIG.whitelistOfflineNames();
 
-        whitelist.stream().sorted().map(String::toLowerCase).distinct().forEach(s -> {
-			Map<String, String> player = makePlayer(s);
-			if (player != null && !player.get("uuid").isEmpty()
-                    && (checkWhitelist(player.get("uuid")) && !checkWhitelist(s))) {
-                removeIds.add(player.get("uuid"));
+        for (String s : whitelist.stream().map(String::toLowerCase).distinct().toList()) {
+            if (!names.contains(s)) {
+                PlayerEntry player = getPlayer(s, !useUuid);
+                if (player != null && !player.uuid.isEmpty()) {
+                    newWhitelist.remove(player);
+                }
+                if (player != null) {
+                    newWhitelist.add(player);
+                    names.remove(s);
+                }
+            } else {
+                names.remove(s);
             }
-			if (player != null) newWhitelist.add(player);
+        }
+        newWhitelist.removeIf(p -> {
+            return (useUuid || !offlineNames.contains(p.name)) && names.contains(p.name);
         });
-		if (getUseUuid() || useUuid) {
-			for (Map<String, String> player : CONFIG.whitelist()) {
-				if (player.get("uuid").isEmpty() && !newWhitelist.contains(player)) {
-					newWhitelist.add(player);
-				}
-			}
-		}
-		for (String id : removeIds) {
-			newWhitelist.removeIf(player ->
-					player.get("name")
-							.equalsIgnoreCase(getWhitelistCounterpart(id)) &&
-							player.get("uuid")
-									.equals(id)
-			);
-		}
 
-		CONFIG.setEnabled(enabled);
-		CONFIG.setUseUuid(useUuid);
-		CONFIG.setSendNotification(sendNotifications);
-		CONFIG.setWhitelist(newWhitelist);
-		saveToFile();
+        CONFIG = new Config(enabled, useUuid, sendNotification, newWhitelist.stream().sorted().toList());
+		saveConfig();
 	}
 
-	private static void saveToFile() {
+	private static void saveConfig() {
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
 			writer.write(gson.toJson(CONFIG));
@@ -177,23 +150,21 @@ public class LANLock implements ModInitializer {
 
 	// commands
 	public static String add(String name) {
-		Map<String, String> player = makePlayer(name);
+		PlayerEntry player = getPlayer(name, !CONFIG.useUuid());
 		if (player == null) return null;
-		if (!CONFIG.whitelist().contains(player)) {
-			CONFIG.addToWhitelist(player);
-			saveToFile();
-			return player.get("name");
-		}
+        Config temp = CONFIG;
+        CONFIG = CONFIG.addToWhitelist(player);
+        if (temp != CONFIG) {
+			saveConfig();
+			return player.name;
+        }
 		return "";
 	}
 
 	public static boolean remove(String name) {
 		if (checkWhitelist(name)) {
-			CONFIG.removeFromWhitelist(Map.of(
-					"uuid", Objects.requireNonNull(getWhitelistCounterpart(name)),
-					"name", name
-			));
-			saveToFile();
+			CONFIG = CONFIG.removeFromWhitelist(new PlayerEntry("", name));
+			saveConfig();
 			return true;
 		}
 		return false;
@@ -201,22 +172,22 @@ public class LANLock implements ModInitializer {
 
 	public static void setEnabled(boolean value) {
 		if (CONFIG.enabled() != value) {
-			CONFIG.setEnabled(value);
-			saveToFile();
+			CONFIG = CONFIG.setEnabled(value);
+			saveConfig();
 		}
 	}
 
 	public static void setUseUuid(boolean value) {
 		if (CONFIG.useUuid() != value) {
-			CONFIG.setUseUuid(value);
-			saveToFile();
+			CONFIG = CONFIG.setUseUuid(value);
+			saveConfig();
 		}
 	}
 
 	public static void setSendNotification(boolean value) {
 		if (CONFIG.sendNotification() != value) {
-			CONFIG.setSendNotification(value);
-			saveToFile();
+			CONFIG = CONFIG.setSendNotification(value);
+			saveConfig();
 		}
 	}
 }

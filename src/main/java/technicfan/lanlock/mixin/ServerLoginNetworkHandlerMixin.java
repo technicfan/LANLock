@@ -18,7 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import technicfan.lanlock.LANLock;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import java.util.UUID;
 
 @Mixin(ServerLoginPacketListenerImpl.class)
@@ -40,11 +39,12 @@ public abstract class ServerLoginNetworkHandlerMixin {
     )
     private void checkPlayer(ServerboundHelloPacket packet, CallbackInfo ci) {
         if (LANLock.enabled() && packet != null) {
+            UUID offlineUuid = offlineUuid(packet.name());
             //? if >1.20.1 {
-            String uuid = packet.profileId().toString();
+            UUID uuid = packet.profileId();
             //?} else
-            /*String uuid = packet.profileId().isPresent() ? packet.profileId().get().toString() : "None";*/
-            String id = LANLock.getUseUuid() ? uuid : packet.name();
+            /*UUID uuid = packet.profileId().orElse(offlineUuid);*/
+            String id = LANLock.getUseUuid() ? uuid.toString() : packet.name();
             if (!LANLock.checkWhitelist(id)) {
                 disconnect(Component.translatable("multiplayer.disconnect.not_whitelisted"));
                 if (LANLock.getSendNotification() && server.getSingleplayerProfile() != null) {
@@ -55,13 +55,7 @@ public abstract class ServerLoginNetworkHandlerMixin {
                         /*.id()*/
                     );
                     if (host != null) {
-                        boolean offline = packet.profileId().equals(
-                            //? if <=1.20.1
-                            /*java.util.Optional.of(*/
-                            UUID.nameUUIDFromBytes(("OfflinePlayer:" + packet.name()).getBytes(StandardCharsets.UTF_8))
-                            //? if <=1.20.1
-                            /*)*/
-                        );
+                        boolean offline = uuid.equals(offlineUuid);
                         if (!LANLock.getUseUuid() || !offline || !LANLock.checkWhitelist(packet.name())) {
                             MutableComponent message = Component.translatable("lanlock.notification", packet.name());
                             if (offline) message.append(Component.literal(" ")).append(Component.translatable("lanlock.notification.offline"));
@@ -86,7 +80,8 @@ public abstract class ServerLoginNetworkHandlerMixin {
                                 );
                             }
                         } else {
-                            if (Objects.requireNonNull(LANLock.getWhitelistCounterpart(packet.name())).isEmpty())
+                            id = LANLock.getWhitelistCounterpart(packet.name());
+                            if (id != null && !id.isEmpty())
                                 host.sendSystemMessage(Component.translatable("lanlock.notification.offline.disabled", packet.name()), false);
                         }
                     }
@@ -94,5 +89,9 @@ public abstract class ServerLoginNetworkHandlerMixin {
                 ci.cancel();
             }
         }
+    }
+
+    private static UUID offlineUuid(String name) {
+        return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
     }
 }
