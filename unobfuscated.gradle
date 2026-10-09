@@ -42,6 +42,7 @@ dependencies {
 stonecutter {
     replacements.string(true) {
        replace "ClientCommandManager", "ClientCommands"
+       replace "getGameProfile", "nameAndId"
     }
 }
 

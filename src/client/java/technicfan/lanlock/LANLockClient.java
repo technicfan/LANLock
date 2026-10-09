@@ -7,7 +7,10 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -20,7 +23,7 @@ public class LANLockClient implements ClientModInitializer {
                 .then(ClientCommandManager.literal("reload").executes(LANLockClient::reload))
                 .then(ClientCommandManager.literal("add")
                     .then(ClientCommandManager.argument("player", StringArgumentType.string())
-                        .suggests(new PlayerSuggestionProvider())
+                        .suggests(new PlayerSuggestionProvider(false))
                         .executes(LANLockClient::add)))
                 .then(ClientCommandManager.literal("remove")
                     .then(ClientCommandManager.argument("player", StringArgumentType.string())
@@ -81,6 +84,15 @@ public class LANLockClient implements ClientModInitializer {
         String name = StringArgumentType.getString(commandContext, "player");
         boolean result = LANLock.remove(name);
         if (result) {
+            if (LANLock.enabled()) {
+                IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
+                if (server != null) {
+                    ServerPlayer player = server.getPlayerList().getPlayerByName(name);
+                    if (player != null && !server.isSingleplayerOwner(player.getGameProfile())) {
+                        player.connection.disconnect(Component.translatable("multiplayer.disconnect.kick"));
+                    }
+                }
+            }
             commandContext.getSource().sendFeedback(Component.translatable("commands.whitelist.remove.success", name));
         } else {
             commandContext.getSource().sendError(Component.translatable("commands.whitelist.remove.failed"));
@@ -95,6 +107,15 @@ public class LANLockClient implements ClientModInitializer {
         } else {
             commandContext.getSource().sendFeedback(Component.translatable("commands.whitelist.enabled"));
             LANLock.setEnabled(true);
+            IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
+            if (server != null) {
+                server.getPlayerList().getPlayers().forEach(player -> {
+                    if (!server.isSingleplayerOwner(player.getGameProfile())
+                            && !LANLock.checkWhitelist(LANLock.getUseUuid() ? player.getStringUUID() : player.getName().getString())) {
+                        player.connection.disconnect(Component.translatable("multiplayer.disconnect.kick"));
+                    }
+                });
+            }
             return 1;
         }
     }
