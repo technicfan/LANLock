@@ -23,7 +23,7 @@ public class LANLockClient implements ClientModInitializer {
                 .then(ClientCommandManager.literal("reload").executes(LANLockClient::reload))
                 .then(ClientCommandManager.literal("add")
                     .then(ClientCommandManager.argument("player", StringArgumentType.string())
-                        .suggests(new PlayerSuggestionProvider(false))
+                        .suggests(new PlayerSuggestionProvider())
                         .executes(LANLockClient::add)))
                 .then(ClientCommandManager.literal("remove")
                     .then(ClientCommandManager.argument("player", StringArgumentType.string())
@@ -89,7 +89,7 @@ public class LANLockClient implements ClientModInitializer {
                 if (server != null) {
                     ServerPlayer player = server.getPlayerList().getPlayerByName(name);
                     if (player != null && !server.isSingleplayerOwner(player.getGameProfile())) {
-                        player.connection.disconnect(Component.translatable("multiplayer.disconnect.kick"));
+                        player.connection.disconnect(Component.translatable("multiplayer.disconnect.not_whitelisted"));
                     }
                 }
             }
@@ -112,7 +112,7 @@ public class LANLockClient implements ClientModInitializer {
                 server.getPlayerList().getPlayers().forEach(player -> {
                     if (!server.isSingleplayerOwner(player.getGameProfile())
                             && !LANLock.checkWhitelist(LANLock.getUseUuid() ? player.getStringUUID() : player.getName().getString())) {
-                        player.connection.disconnect(Component.translatable("multiplayer.disconnect.kick"));
+                        player.connection.disconnect(Component.translatable("multiplayer.disconnect.not_whitelisted"));
                     }
                 });
             }
